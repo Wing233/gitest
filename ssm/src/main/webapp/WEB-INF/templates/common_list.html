@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>mylist</title>
+    <style>
+        #empTable {
+            width: 800px;
+            border: 3px solid blue;
+            margin: 0px auto;
+        }
+
+        #empTable1 {
+            width: 800px;
+            border: 3px solid blue;
+            margin: 0px auto;
+        }
+
+        #empTable th, td {
+            text-align: center;
+            font-family: 微软雅黑;
+            border: 1px solid green;
+        }
+    </style>
+</head>
+<body>
+
+<div>
+    <h1 align="center">每日清单</h1>
+    <table id="empTable1" cellspacing="0px" cellpadding="0px">
+        <thead>
+        <tr>
+            <th>序号</th>
+            <th>id</th>
+            <th>内容</th>
+            <th>创建时间</th>
+            <th>完成时间</th>
+            <th>状态</th>
+            <th colspan="2">操作</th>
+        </tr>
+        </thead>
+        <tbody th:if="${#lists.isEmpty(dailyListContents.list)}">
+        <tr style="text-align: center">
+            <td colspan="8">啥也没有</td>
+        </tr>
+        </tbody>
+        <tbody th:unless="${#lists.isEmpty(dailyListContents.list)}">
+        <tr th:each="commonList,status : ${dailyListContents.list}">
+            <td th:text="${status.count}"></td>
+            <td th:text="${commonList.id}"></td>
+            <td th:text="${commonList.content}"></td>
+            <td th:text="${commonList.createDate}"></td>
+            <td th:text="${commonList.finishDate}"></td>
+            <td th:text="${commonList.status}"></td>
+            <td>
+                <form th:action="@{'/commonlists/updateDaily/' + ${commonList.id}}"
+                      th:if="${commonList.status eq 0}"
+                      method="post">
+                    <input type="hidden" name="_method" value="PUT">
+                    <input type="submit" value="完成">
+                </form>
+            </td>
+            <td>
+                <form th:action="@{'/commonlists/deleteDaily/' + ${dailyListContents.pageNum} + '/' + ${commonList.id}}"
+                      method="post" th:onsubmit="confirmDelete()">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <input type="submit" value="删除">
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <div style="text-align: center;">
+        <a th:if="${dailyListContents.hasPreviousPage}"
+           th:href="@{'/commonlists/page/' + ${commonLists.pageNum} + '/1'}">首页</a>
+        <a th:if="${dailyListContents.hasPreviousPage}"
+           th:href="@{'/commonlists/page/' + ${commonLists.pageNum} + '/' + ${dailyListContents.prePage}}">上一页</a>
+        <span th:each="pageNum,status : ${dailyListContents.navigatepageNums}">
+    <a th:if="${dailyListContents.pageNum == pageNum}" style="color: red;"
+       th:href="@{'/commonlists/page/' + ${commonLists.pageNum} + '/' + ${pageNum}}"
+       th:text="'[' + ${pageNum} + ']'"></a>
+    <a th:unless="${dailyListContents.pageNum == pageNum}"
+       th:href="@{'/commonlists/page/' + ${commonLists.pageNum} + '/' + ${pageNum}}"
+       th:text="${pageNum}"></a>
+    </span>
+        <a th:if="${dailyListContents.hasNextPage}"
+           th:href="@{'/commonlists/page/' + ${commonLists.pageNum} + '/' + ${dailyListContents.nextPage}}">下一页</a>
+        <a th:if="${dailyListContents.hasNextPage}"
+           th:href="@{'/commonlists/page/' + ${commonLists.pageNum} + '/' + ${dailyListContents.pages}}">尾页</a>
+    </div>
+
+    <h1 align="center">添加日常清单</h1>
+    <div style="width: 300px; height: 150px;margin: 0px auto">
+        <form th:action="@{/addOrUpdateDailyList}" method="POST">
+            内容:<input type="text" name="content"> &nbsp;&nbsp;
+            <input type="submit" value="保存"> &nbsp;&nbsp;
+            <input type="reset" value="清空">
+        </form>
+    </div>
+</div>
+
+
+<div>
+    <h1 align="center">清单</h1>
+    <table id="empTable" cellspacing="0px" cellpadding="0px">
+        <thead>
+        <tr>
+            <th>序号</th>
+            <th>id</th>
+            <th>内容</th>
+            <th>创建时间</th>
+            <th>完成时间</th>
+            <th>状态</th>
+            <th colspan="2">操作</th>
+        </tr>
+        </thead>
+        <tbody th:if="${#lists.isEmpty(commonLists.list)}">
+        <tr style="text-align: center">
+            <td colspan="8">啥也没有</td>
+        </tr>
+        </tbody>
+        <tbody th:unless="${#lists.isEmpty(commonLists.list)}">
+        <tr th:each="commonList,status : ${commonLists.list}">
+            <td th:text="${status.count}"></td>
+            <td th:text="${commonList.id}"></td>
+            <td th:text="${commonList.content}"></td>
+            <td th:text="${commonList.createDate}"></td>
+            <td th:text="${commonList.finishDate}"></td>
+            <td th:text="${commonList.status}"></td>
+            <td>
+                <form th:action="@{'/commonlists/update/' + ${commonList.id}}" th:if="${commonList.status eq 0}"
+                      method="post">
+                    <input type="hidden" name="_method" value="PUT">
+                    <input type="submit" value="完成">
+                </form>
+            </td>
+            <td>
+                <form th:action="@{'/commonlists/delete/' + ${commonLists.pageNum} + '/' + ${commonList.id}}"
+                      method="post" th:onsubmit="confirmDelete()">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <input type="submit" value="删除">
+                </form>
+            </td>
+
+
+            <!--                <a th:href="@{'/commonlists/update/' + ${commonList.id}}" th:if="${commonList.status eq 0}">完成</a>-->
+            <!--                <a th:href="@{'/commonlists/delete/' + ${commonLists.pageNum} + '/' + ${commonList.id}}"-->
+            <!--                   onclick="confirmDelete()">删除</a>-->
+        </tr>
+        </tbody>
+    </table>
+    <div style="text-align: center;">
+        <a th:if="${commonLists.hasPreviousPage}"
+           th:href="@{'/commonlists/page/1/' + ${dailyListContents.pageNum}}">首页</a>
+        <a th:if="${commonLists.hasPreviousPage}"
+           th:href="@{'/commonlists/page/' + ${commonLists.prePage} + '/' + ${dailyListContents.pageNum}}">上一页</a>
+        <span th:each="pageNum,status : ${commonLists.navigatepageNums}">
+    <a th:if="${commonLists.pageNum == pageNum}" style="color: red;"
+       th:href="@{'/commonlists/page/' + ${pageNum} + '/' + ${dailyListContents.pageNum}}"
+       th:text="'[' + ${pageNum} + ']'"></a>
+    <a th:unless="${commonLists.pageNum == pageNum}"
+       th:href="@{'/commonlists/page/' + ${pageNum} + '/' + ${dailyListContents.pageNum}}"
+       th:text="${pageNum}"></a>
+    </span>
+        <a th:if="${commonLists.hasNextPage}"
+           th:href="@{'/commonlists/page/' + ${commonLists.nextPage} + '/' + ${dailyListContents.pageNum}}">下一页</a>
+        <a th:if="${commonLists.hasNextPage}"
+           th:href="@{'/commonlists/page/' + ${commonLists.pages} + '/' + ${dailyListContents.pageNum}}">尾页</a>
+    </div>
+    <script>
+        function confirmDelete() {
+            if (!confirm("确定删除?")) {
+                event.preventDefault();
+            }
+        }
+    </script>
+    <h1 align="center">请输入清单信息</h1>
+    <div th:unless="${#lists.size(commonLists.list) gt 50}" style="width: 300px; height: 150px;margin: 0px auto">
+        <form th:action="@{/addOrUpdateList}" method="POST">
+            内容:<input type="text" name="content"> &nbsp;&nbsp;
+            <input type="submit" value="保存"> &nbsp;&nbsp;
+            <input type="reset" value="清空">
+        </form>
+    </div>
+    <div th:if="${#lists.size(commonLists.list) gt 50}">
+        <h2 align="center">太多</h2>
+    </div>
+</div>
+</body>
+</html>
