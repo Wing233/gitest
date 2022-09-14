@@ -25,6 +25,7 @@ public class TestCommonList {
         System.out.println("2022年09月13日 10:18:32".substring(0,11));
         System.out.println("hello");
         System.out.println("git");
+        System.out.println(22);
     }
 
 }
