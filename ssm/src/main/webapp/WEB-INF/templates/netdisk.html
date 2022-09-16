@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <base th:href="@{/}">
+    <meta charset="UTF-8">
+    <title>摆渡网盘</title>
+    <style>
+        #empTable1 {
+            width: 800px;
+            border: 3px solid #ff00a1;
+            margin: 0px auto;
+        }
+
+        #empTable th, td {
+            text-align: center;
+            font-family: 微软雅黑;
+            border: 1px solid green;
+        }
+    </style>
+    <script src="static/script/vue.js"></script>
+    <script src="static/script/axios.min.js"></script>
+    <script src="static/script/jquery-1.7.2.js"></script>
+    <script src="static/script/layer/layer.js"></script>
+</head>
+<body>
+<a href=""><h2>返回</h2></a><br>
+
+<div id="app">
+    <h1 align="center">败毒网盘</h1>
+    <table id="empTable1" cellspacing="0px" cellpadding="0px">
+        <thead>
+        <tr>
+            <th>序号</th>
+            <th>id</th>
+            <th>文件名</th>
+            <th>描述</th>
+            <th>上传时间</th>
+            <th>下载量</th>
+            <th colspan="2">操作</th>
+        </tr>
+        </thead>
+        <tbody v-if="files.list.length == 0">
+        <tr style="text-align: center">
+            <td colspan="8">啥也没有</td>
+        </tr>
+        </tbody>
+        <tbody v-if="files.list.length > 0">
+        <tr v-for="(commonList,index) in files.list">
+            <td v-text="index + 1"></td>
+            <td v-text="commonList.id"></td>
+            <td v-text="commonList.fileName"></td>
+            <td v-text="commonList.desc"></td>
+            <td v-text="commonList.uploadDate"></td>
+            <td v-text="commonList.downloadCount"></td>
+            <td>
+                <form th:action="@{/download}">
+                    <input type="hidden" name="id" v-model="commonList.id">
+                    <input type="submit" value="下载">
+                </form>
+<!--                <input type="button" value="下载" @click="downloadFile(commonList.id)">-->
+            </td>
+            <td>
+                <input type="button" value="删除" @click="deleteFile(commonList.id)">
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div style="text-align: center;">
+        <input type="button" value="首页" v-if="files.hasPreviousPage" @click="toPage(1)">
+        <input type="button" value="上一页" v-if="files.hasPreviousPage"
+               @click="toPage(files.prePage)">
+        <span v-for="(dailyPageNum,index) in files.navigatepageNums">
+    <input type="button" v-if="files.pageNum == dailyPageNum" style="color: red;"
+           @click="toPage(dailyPageNum)"
+           v-model="pageNum">
+    <input type="button" v-if="files.pageNum != dailyPageNum"
+           @click="toPage(dailyPageNum)"
+           v-model="pageNum"></a>
+    </span>
+        <input type="button" value="下一页" v-if="files.hasNextPage"
+               @click="toPage(files.nextPage)">
+        <input type="button" value="尾页" v-if="files.hasNextPage"
+               @click="toPage(files.pages)">
+    </div>
+</div>
+<h3>上传</h3>
+<form th:action="@{/fileUpload}" method="post" enctype="multipart/form-data">
+    描述：<input type="text" name="desc"><br>
+    文件：<input type="file" name="file" multiple><br>
+    <input type="submit">
+</form>
+<script>
+    let vue = new Vue({
+        el: "#app",
+        data: {
+            "pageNum": 1,
+            "files": {}
+        },
+        methods: {
+            showNetDisk() {
+                axios({
+                    "url": "netDisk/page",
+                    "method": "POST",
+                    "params": {
+                        "pageNum": this.pageNum,
+                    }
+                }).then(response => {
+                    this.files = response.data;
+                })
+            },
+            deleteFile(id) {
+                if (!confirm("确认删除?")) {
+                    event.preventDefault();
+                } else {
+                    axios({
+                        "url": "deleteFile",
+                        "method": "POST",
+                        "params": {
+                            "id": id,
+                        }
+                    }).then(response => {
+                        this.showNetDisk();
+                        layer.msg(response.data);
+                    })
+                }
+            }
+        },
+        created() {
+            this.showNetDisk();
+        }
+    })
+</script>
+
+</body>
+</html>
