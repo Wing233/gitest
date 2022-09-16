@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -40,7 +39,7 @@ public class CommonListServiceImpl implements CommonListService {
     private DailyListMapper dailyListMapper;
 
     @Override
-    public PageInfo<CommonList> selectAll(int pageNum){
+    public PageInfo<CommonList> selectAll(int pageNum) {
         PageHelper.startPage(pageNum, ListConstants.PAGE_SIZE);
         CommonListExample commonListExample = new CommonListExample();
         commonListExample.setOrderByClause("status ASC, create_date DESC, id ASC");
@@ -69,11 +68,11 @@ public class CommonListServiceImpl implements CommonListService {
 
     @Override
     public PageInfo<DailyListContent> selectAllDailyListContent(int dailyPageNum) {
-        PageHelper.startPage(dailyPageNum, ListConstants.PAGE_SIZE);
         DailyListContentExample oldDailyListContentExample = new DailyListContentExample();
         oldDailyListContentExample.setOrderByClause("create_date DESC");
         List<DailyListContent> oldDailyListContents = dailyListContentMapper.selectByExample(oldDailyListContentExample);
         if (oldDailyListContents.size() == 0) {
+            PageHelper.startPage(dailyPageNum, ListConstants.PAGE_SIZE);
             List<DailyListContent> dailyListContents = dailyListContentMapper.selectByExample(null);
             return new PageInfo<>(dailyListContents, ListConstants.NAVIGATE_PAGES);
         }
@@ -96,11 +95,12 @@ public class CommonListServiceImpl implements CommonListService {
             });
 
         }
-            DailyListContentExample dailyListContentExample = new DailyListContentExample();
-            dailyListContentExample.createCriteria().andCreateDateLike(date + "%");
-            dailyListContentExample.setOrderByClause("status ASC, create_date DESC, id ASC");
-            List<DailyListContent> dailyListContents = dailyListContentMapper.selectByExample(dailyListContentExample);
-            return new PageInfo<>(dailyListContents, ListConstants.NAVIGATE_PAGES);
+        DailyListContentExample dailyListContentExample = new DailyListContentExample();
+        dailyListContentExample.createCriteria().andCreateDateLike(date + "%");
+        dailyListContentExample.setOrderByClause("status ASC, create_date DESC, id ASC");
+        PageHelper.startPage(dailyPageNum, ListConstants.PAGE_SIZE);
+        List<DailyListContent> dailyListContents = dailyListContentMapper.selectByExample(dailyListContentExample);
+        return new PageInfo<>(dailyListContents, ListConstants.NAVIGATE_PAGES);
 
     }
 

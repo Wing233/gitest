@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
+    <base th:href="@{/}">
     <meta charset="UTF-8">
-    <title>mylist</title>
+    <title>清单</title>
     <style>
         #empTable {
             width: 800px;
@@ -12,7 +13,7 @@
 
         #empTable1 {
             width: 800px;
-            border: 3px solid blue;
+            border: 3px solid #ff00a1;
             margin: 0px auto;
         }
 
@@ -22,169 +23,279 @@
             border: 1px solid green;
         }
     </style>
+    <script src="static/script/vue.js"></script>
+    <script src="static/script/axios.min.js"></script>
+    <script src="static/script/jquery-1.7.2.js"></script>
+    <script src="static/script/layer/layer.js"></script>
 </head>
 <body>
+<a href=""><h2>返回</h2></a><br>
+<div id="app">
+    <div>
+        <h1 align="center">每日清单</h1>
+        <table id="empTable1" cellspacing="0px" cellpadding="0px">
+            <thead>
+            <tr>
+                <th>序号</th>
+                <th>id</th>
+                <th>内容</th>
+                <th>创建时间</th>
+                <th>完成时间</th>
+                <th>状态</th>
+                <th colspan="2">操作</th>
+            </tr>
+            </thead>
+            <tbody v-if="dailyListContents.list.length == 0">
+            <tr style="text-align: center">
+                <td colspan="8">啥也没有</td>
+            </tr>
+            </tbody>
+            <tbody v-if="dailyListContents.list.length > 0">
+            <tr v-for="(commonList,index) in dailyListContents.list">
+                <td v-text="index + 1"></td>
+                <td v-text="commonList.id"></td>
+                <td v-text="commonList.content"></td>
+                <td v-text="commonList.createDate"></td>
+                <td v-text="commonList.finishDate"></td>
+                <td v-text="commonList.status"></td>
+                <td v-if="commonList.status == 0">
+                    <input type="button" value="完成" @click="finishDailyList(commonList.id)">
+                </td>
+                <td colspan="2">
+                    <input type="button" value="删除" @click="deleteDailyList(commonList.id)">
+                </td>
+            </tr>
+            </tbody>
+        </table>
 
-<div>
-    <h1 align="center">每日清单</h1>
-    <table id="empTable1" cellspacing="0px" cellpadding="0px">
-        <thead>
-        <tr>
-            <th>序号</th>
-            <th>id</th>
-            <th>内容</th>
-            <th>创建时间</th>
-            <th>完成时间</th>
-            <th>状态</th>
-            <th colspan="2">操作</th>
-        </tr>
-        </thead>
-        <tbody th:if="${#lists.isEmpty(dailyListContents.list)}">
-        <tr style="text-align: center">
-            <td colspan="8">啥也没有</td>
-        </tr>
-        </tbody>
-        <tbody th:unless="${#lists.isEmpty(dailyListContents.list)}">
-        <tr th:each="commonList,status : ${dailyListContents.list}">
-            <td th:text="${status.count}"></td>
-            <td th:text="${commonList.id}"></td>
-            <td th:text="${commonList.content}"></td>
-            <td th:text="${commonList.createDate}"></td>
-            <td th:text="${commonList.finishDate}"></td>
-            <td th:text="${commonList.status}"></td>
-            <td>
-                <form th:action="@{'/commonlists/updateDaily/' + ${commonList.id}}"
-                      th:if="${commonList.status eq 0}"
-                      method="post">
-                    <input type="hidden" name="_method" value="PUT">
-                    <input type="submit" value="完成">
-                </form>
-            </td>
-            <td>
-                <form th:action="@{'/commonlists/deleteDaily/' + ${dailyListContents.pageNum} + '/' + ${commonList.id}}"
-                      method="post" th:onsubmit="confirmDelete()">
-                    <input type="hidden" name="_method" value="DELETE">
-                    <input type="submit" value="删除">
-                </form>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-    <div style="text-align: center;">
-        <a th:if="${dailyListContents.hasPreviousPage}"
-           th:href="@{'/commonlists/page/' + ${commonLists.pageNum} + '/1'}">首页</a>
-        <a th:if="${dailyListContents.hasPreviousPage}"
-           th:href="@{'/commonlists/page/' + ${commonLists.pageNum} + '/' + ${dailyListContents.prePage}}">上一页</a>
-        <span th:each="pageNum,status : ${dailyListContents.navigatepageNums}">
-    <a th:if="${dailyListContents.pageNum == pageNum}" style="color: red;"
-       th:href="@{'/commonlists/page/' + ${commonLists.pageNum} + '/' + ${pageNum}}"
-       th:text="'[' + ${pageNum} + ']'"></a>
-    <a th:unless="${dailyListContents.pageNum == pageNum}"
-       th:href="@{'/commonlists/page/' + ${commonLists.pageNum} + '/' + ${pageNum}}"
-       th:text="${pageNum}"></a>
+        <div style="text-align: center;">
+            <input type="button" value="首页" v-if="dailyListContents.hasPreviousPage" @click="toDailyPage(1)">
+            <input type="button" value="上一页" v-if="dailyListContents.hasPreviousPage"
+                   @click="toDailyPage(dailyListContents.prePage)">
+            <span v-for="(dailyPageNum,index) in dailyListContents.navigatepageNums">
+    <input type="button" v-if="dailyListContents.pageNum == dailyPageNum" style="color: red;"
+           @click="toDailyPage(dailyPageNum)"
+           v-model="dailyPageNum">
+    <input type="button" v-if="dailyListContents.pageNum != dailyPageNum"
+           @click="toDailyPage(dailyPageNum)"
+           v-model="dailyPageNum"></a>
     </span>
-        <a th:if="${dailyListContents.hasNextPage}"
-           th:href="@{'/commonlists/page/' + ${commonLists.pageNum} + '/' + ${dailyListContents.nextPage}}">下一页</a>
-        <a th:if="${dailyListContents.hasNextPage}"
-           th:href="@{'/commonlists/page/' + ${commonLists.pageNum} + '/' + ${dailyListContents.pages}}">尾页</a>
+            <input type="button" value="下一页" v-if="dailyListContents.hasNextPage"
+                   @click="toDailyPage(dailyListContents.nextPage)">
+            <input type="button" value="尾页" v-if="dailyListContents.hasNextPage"
+                   @click="toDailyPage(dailyListContents.pages)">
+        </div>
+
+        <h1 align="center">添加日常清单</h1>
+        <div v-if="dailyListContents.list.length <= 50" style="width: 300px; height: 150px;margin: 0px auto">
+            内容:<input type="text" name="content" v-model="addDailyContent"> &nbsp;&nbsp;
+            <input type="button" @click="addDailyList" value="保存"> &nbsp;&nbsp;
+        </div>
+        <div v-if="dailyListContents.list.length > 50">
+            <h2 align="center">太多</h2>
+        </div>
     </div>
 
-    <h1 align="center">添加日常清单</h1>
-    <div style="width: 300px; height: 150px;margin: 0px auto">
-        <form th:action="@{/addOrUpdateDailyList}" method="POST">
-            内容:<input type="text" name="content"> &nbsp;&nbsp;
-            <input type="submit" value="保存"> &nbsp;&nbsp;
-            <input type="reset" value="清空">
-        </form>
+
+    <div>
+        <h1 align="center">清单</h1>
+        <table id="empTable" cellspacing="0px" cellpadding="0px">
+            <thead>
+            <tr>
+                <th>序号</th>
+                <th>id</th>
+                <th>内容</th>
+                <th>创建时间</th>
+                <th>完成时间</th>
+                <th>状态</th>
+                <th colspan="2">操作</th>
+            </tr>
+            </thead>
+            <tbody v-if="commonLists.list.length == 0">
+            <tr style="text-align: center">
+                <td colspan="8">啥也没有</td>
+            </tr>
+            </tbody>
+            <tbody v-if="commonLists.list.length > 0">
+            <tr v-for="(commonList,index) in commonLists.list">
+                <td v-text="index + 1"></td>
+                <td v-text="commonList.id"></td>
+                <td v-text="commonList.content"></td>
+                <td v-text="commonList.createDate"></td>
+                <td v-text="commonList.finishDate"></td>
+                <td v-text="commonList.status"></td>
+                <td v-if="commonList.status == 0">
+                    <input type="button" value="完成" @click="finishCommonList(commonList.id)">
+                </td>
+                <td colspan="2">
+                    <input type="button" value="删除" @click="deleteCommonList(commonList.id)">
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <div style="text-align: center;">
+            <input type="button" value="首页" v-if="commonLists.hasPreviousPage" @click="toPage(1)">
+            <input type="button" value="上一页" v-if="commonLists.hasPreviousPage" @click="toPage(commonLists.prePage)">
+            <span v-for="(pageNum,index) in commonLists.navigatepageNums">
+    <input type="button" v-if="commonLists.pageNum == pageNum" style="color: red;"
+           @click="toPage(pageNum)"
+           v-model="pageNum">
+    <input type="button" v-if="commonLists.pageNum != pageNum"
+           @click="toPage(pageNum)"
+           v-model="pageNum"></a>
+    </span>
+            <input type="button" value="下一页" v-if="commonLists.hasNextPage" @click="toPage(commonLists.nextPage)">
+            <input type="button" value="尾页" v-if="commonLists.hasNextPage" @click="toPage(commonLists.pages)">
+        </div>
+
+        <h1 align="center">添加清单</h1>
+        <div v-if="commonLists.list.length <= 50" style="width: 300px; height: 150px;margin: 0px auto">
+            内容:<input type="text" name="content" v-model="addContent"> &nbsp;&nbsp;
+            <input type="button" @click="addCommonList" value="保存"> &nbsp;&nbsp;
+        </div>
+        <div v-if="commonLists.list.length > 50">
+            <h2 align="center">太多</h2>
+        </div>
     </div>
 </div>
-
-
-<div>
-    <h1 align="center">清单</h1>
-    <table id="empTable" cellspacing="0px" cellpadding="0px">
-        <thead>
-        <tr>
-            <th>序号</th>
-            <th>id</th>
-            <th>内容</th>
-            <th>创建时间</th>
-            <th>完成时间</th>
-            <th>状态</th>
-            <th colspan="2">操作</th>
-        </tr>
-        </thead>
-        <tbody th:if="${#lists.isEmpty(commonLists.list)}">
-        <tr style="text-align: center">
-            <td colspan="8">啥也没有</td>
-        </tr>
-        </tbody>
-        <tbody th:unless="${#lists.isEmpty(commonLists.list)}">
-        <tr th:each="commonList,status : ${commonLists.list}">
-            <td th:text="${status.count}"></td>
-            <td th:text="${commonList.id}"></td>
-            <td th:text="${commonList.content}"></td>
-            <td th:text="${commonList.createDate}"></td>
-            <td th:text="${commonList.finishDate}"></td>
-            <td th:text="${commonList.status}"></td>
-            <td>
-                <form th:action="@{'/commonlists/update/' + ${commonList.id}}" th:if="${commonList.status eq 0}"
-                      method="post">
-                    <input type="hidden" name="_method" value="PUT">
-                    <input type="submit" value="完成">
-                </form>
-            </td>
-            <td>
-                <form th:action="@{'/commonlists/delete/' + ${commonLists.pageNum} + '/' + ${commonList.id}}"
-                      method="post" th:onsubmit="confirmDelete()">
-                    <input type="hidden" name="_method" value="DELETE">
-                    <input type="submit" value="删除">
-                </form>
-            </td>
-
-
-            <!--                <a th:href="@{'/commonlists/update/' + ${commonList.id}}" th:if="${commonList.status eq 0}">完成</a>-->
-            <!--                <a th:href="@{'/commonlists/delete/' + ${commonLists.pageNum} + '/' + ${commonList.id}}"-->
-            <!--                   onclick="confirmDelete()">删除</a>-->
-        </tr>
-        </tbody>
-    </table>
-    <div style="text-align: center;">
-        <a th:if="${commonLists.hasPreviousPage}"
-           th:href="@{'/commonlists/page/1/' + ${dailyListContents.pageNum}}">首页</a>
-        <a th:if="${commonLists.hasPreviousPage}"
-           th:href="@{'/commonlists/page/' + ${commonLists.prePage} + '/' + ${dailyListContents.pageNum}}">上一页</a>
-        <span th:each="pageNum,status : ${commonLists.navigatepageNums}">
-    <a th:if="${commonLists.pageNum == pageNum}" style="color: red;"
-       th:href="@{'/commonlists/page/' + ${pageNum} + '/' + ${dailyListContents.pageNum}}"
-       th:text="'[' + ${pageNum} + ']'"></a>
-    <a th:unless="${commonLists.pageNum == pageNum}"
-       th:href="@{'/commonlists/page/' + ${pageNum} + '/' + ${dailyListContents.pageNum}}"
-       th:text="${pageNum}"></a>
-    </span>
-        <a th:if="${commonLists.hasNextPage}"
-           th:href="@{'/commonlists/page/' + ${commonLists.nextPage} + '/' + ${dailyListContents.pageNum}}">下一页</a>
-        <a th:if="${commonLists.hasNextPage}"
-           th:href="@{'/commonlists/page/' + ${commonLists.pages} + '/' + ${dailyListContents.pageNum}}">尾页</a>
-    </div>
-    <script>
-        function confirmDelete() {
-            if (!confirm("确定删除?")) {
-                event.preventDefault();
+<script>
+    let vue = new Vue({
+        el: "#app",
+        data: {
+            "commonLists": {},
+            "dailyListContents": {},
+            "pageNum": 1,
+            "dailyPageNum": 1,
+            "addContent": "",
+            "addDailyContent": ""
+        },
+        methods: {
+            showList() {
+                axios({
+                    "url": "commonlists/page",
+                    "method": "POST",
+                    "params": {
+                        "pageNum": this.pageNum,
+                        "dailyPageNum": this.dailyPageNum
+                    }
+                }).then(response => {
+                    this.commonLists = response.data[0];
+                    this.dailyListContents = response.data[1];
+                })
+            },
+            finishCommonList(id) {
+                axios({
+                    "url": "commonlists/update",
+                    "method": "POST",
+                    "params": {
+                        "id": id
+                    }
+                }).then(response => {
+                    layer.msg(response.data)
+                    this.showList();
+                })
+            },
+            deleteCommonList(id) {
+                if (!confirm("确定删除?")) {
+                    event.preventDefault();
+                } else {
+                    axios({
+                        "url": "commonlists/delete",
+                        "method": "POST",
+                        "params": {
+                            "id": id
+                        }
+                    }).then(response => {
+                        layer.msg(response.data)
+                        this.showList();
+                    })
+                }
+            },
+            toPage(page) {
+                axios({
+                    "url": "commonlists/page",
+                    "method": "POST",
+                    "params": {
+                        "pageNum": page,
+                        "dailyPageNum": this.dailyPageNum
+                    }
+                }).then(response => {
+                    this.pageNum = page;
+                    this.commonLists = response.data[0];
+                    this.dailyListContents = response.data[1];
+                })
+            },
+            addCommonList() {
+                axios({
+                    "url": "addOrUpdateList",
+                    "method": "POST",
+                    "params": {
+                        "addContent": this.addContent
+                    }
+                }).then(response => {
+                    layer.msg(response.data)
+                    this.showList()
+                })
+            },
+            finishDailyList(id) {
+                axios({
+                    "url": "commonlists/updateDaily",
+                    "method": "POST",
+                    "params": {
+                        "id": id
+                    }
+                }).then(response => {
+                    layer.msg(response.data)
+                    this.showList();
+                })
+            },
+            deleteDailyList(id) {
+                if (!confirm("确定删除?")) {
+                    event.preventDefault();
+                } else {
+                    axios({
+                        "url": "commonlists/deleteDaily",
+                        "method": "POST",
+                        "params": {
+                            "id": id
+                        }
+                    }).then(response => {
+                        layer.msg(response.data)
+                        this.showList();
+                    })
+                }
+            },
+            toDailyPage(page) {
+                axios({
+                    "url": "commonlists/page",
+                    "method": "POST",
+                    "params": {
+                        "pageNum": this.pageNum,
+                        "dailyPageNum": page
+                    }
+                }).then(response => {
+                    this.dailyPageNum = page;
+                    this.commonLists = response.data[0];
+                    this.dailyListContents = response.data[1];
+                })
+            },
+            addDailyList() {
+                axios({
+                    "url": "addOrUpdateDailyList",
+                    "method": "POST",
+                    "params": {
+                        "addDailyContent": this.addDailyContent
+                    }
+                }).then(response => {
+                    layer.msg(response.data)
+                    this.showList()
+                })
             }
+        }, created() {
+            //钩子函数，在这个钩子函数中就能使用数据模型
+            this.showList()
         }
-    </script>
-    <h1 align="center">请输入清单信息</h1>
-    <div th:unless="${#lists.size(commonLists.list) gt 50}" style="width: 300px; height: 150px;margin: 0px auto">
-        <form th:action="@{/addOrUpdateList}" method="POST">
-            内容:<input type="text" name="content"> &nbsp;&nbsp;
-            <input type="submit" value="保存"> &nbsp;&nbsp;
-            <input type="reset" value="清空">
-        </form>
-    </div>
-    <div th:if="${#lists.size(commonLists.list) gt 50}">
-        <h2 align="center">太多</h2>
-    </div>
-</div>
+    })
+</script>
 </body>
 </html>

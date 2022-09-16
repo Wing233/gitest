@@ -6,11 +6,10 @@ import com.list.pojo.DailyListContent;
 import com.list.service.CommonListService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -25,53 +24,64 @@ public class CommonListController {
     @Autowired
     private CommonListService commonListService;
 
-    @RequestMapping(value = "/commonlists/page/{pageNum}/{dailyPageNum}")
-    public String getAllCommonList(@PathVariable(value = "pageNum") Integer pageNum,
-                                   @PathVariable(value = "dailyPageNum") Integer dailyPageNum,
-                                   Model model) {
-        PageInfo<CommonList> commonLists = commonListService.selectAll(pageNum);
-        PageInfo<DailyListContent> dailyListContents = commonListService.selectAllDailyListContent(dailyPageNum);
-        model.addAttribute("commonLists", commonLists);
-        model.addAttribute("dailyListContents", dailyListContents);
+
+    @RequestMapping(value = "/commonlists")
+    public String toList() {
         return "common_list";
     }
 
-    @RequestMapping(value = "/commonlists/delete/{pageNum}/{id}", method = RequestMethod.DELETE)
-    public String deleteCommonList(@PathVariable(value = "pageNum")Integer pageNum,
-                                   @PathVariable(value = "id")Integer id) {
-        commonListService.deleteCommonListById(id);
-        return "redirect:/commonlists/page/" + pageNum + "/1";
+    @RequestMapping(value = "/commonlists/page")
+    @ResponseBody
+    public List<Object> getAllCommonList(@RequestParam(value = "pageNum", required = false, defaultValue = "1") Integer pageNum,
+                                @RequestParam(value = "dailyPageNum", required = false, defaultValue = "1") Integer dailyPageNum) {
+        PageInfo<CommonList> commonLists = commonListService.selectAll(pageNum);
+        PageInfo<DailyListContent> dailyListContents = commonListService.selectAllDailyListContent(dailyPageNum);
+        List<Object> list = new ArrayList<>();
+        list.add(commonLists);
+        list.add(dailyListContents);
+        return list;
     }
 
-    @RequestMapping(value = "/commonlists/update/{id}", method = RequestMethod.PUT)
-    public String updateCommonList(@PathVariable(value = "id")Integer id) {
+    @RequestMapping(value = "/commonlists/delete")
+    @ResponseBody
+    public String deleteCommonList(@RequestParam(value = "id", required = false) Integer id) {
+        commonListService.deleteCommonListById(id);
+        return "已删除";
+    }
+
+    @RequestMapping(value = "/commonlists/update")
+    @ResponseBody
+    public String updateCommonList(@RequestParam(value = "id", required = false) Integer id) {
         commonListService.finishCommonList(id);
-        return "redirect:/commonlists/page/1/1";
+        return "已完成";
     }
 
     @PostMapping("/addOrUpdateList")
-    public String addCommonList(String content) {
+    @ResponseBody
+    public String addCommonList(@RequestParam(value = "addContent", required = false) String content) {
         commonListService.addCommonListWithContent(content);
-        return "redirect:/commonlists/page/1/1";
+        return "添加成功";
     }
 
-    @RequestMapping(value = "/commonlists/deleteDaily/{pageNum}/{id}", method = RequestMethod.DELETE)
-    public String deleteDailyListContent(@PathVariable(value = "pageNum")Integer pageNum,
-                                         @PathVariable(value = "id")Integer id) {
+    @RequestMapping(value = "/commonlists/deleteDaily")
+    @ResponseBody
+    public String deleteDailyListContent(@RequestParam(value = "id", required = false)Integer id) {
         commonListService.deleteDailyListById(id);
-        return "redirect:/commonlists/page/1/" + pageNum;
+        return "已删除";
     }
 
-    @RequestMapping(value = "/commonlists/updateDaily/{id}", method = RequestMethod.PUT)
-    public String updateDailyListContent(@PathVariable(value = "id")Integer id) {
+    @RequestMapping(value = "/commonlists/updateDaily")
+    @ResponseBody
+    public String updateDailyListContent(@RequestParam(value = "id", required = false)Integer id) {
         commonListService.finishDailyListContent(id);
-        return "redirect:/commonlists/page/1/1";
+        return "已完成";
     }
 
     @PostMapping("/addOrUpdateDailyList")
-    public String addDailyListContent(String content) {
+    @ResponseBody
+    public String addDailyListContent(@RequestParam(value = "addDailyContent", required = false) String content) {
         commonListService.addDailyListContent(content);
-        return "redirect:/commonlists/page/1/1";
+        return "已添加";
     }
 
 }

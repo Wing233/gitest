@@ -4,7 +4,6 @@ import com.github.pagehelper.PageInfo;
 import com.list.pojo.CommonList;
 import com.list.pojo.DailyListContent;
 
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA
