@@ -45,7 +45,7 @@ public class NetDiskController {
     }
 
     @RequestMapping("/download")
-    public ResponseEntity<byte[]> downLoad(HttpSession httpSession, @RequestParam(value = "id", required = false) Integer id) throws IOException {
+    public ResponseEntity<byte[]> downLoad(HttpSession httpSession, @RequestParam(value = "id", required = false, defaultValue = "1") Integer id) throws IOException {
         ServletContext servletContext = httpSession.getServletContext();
         NetDisk file = netDiskService.selectOne(id);
         String realPath = servletContext.getRealPath(File.separator + "upload" + File.separator + file.getUuid());
@@ -62,16 +62,15 @@ public class NetDiskController {
 
     @RequestMapping("/deleteFile")
     @ResponseBody
-    public String deleteFile(@RequestParam(value = "id", required = false) Integer id) {
+    public String deleteFile(@RequestParam(value = "id") Integer id) {
         netDiskService.deleteFile(id);
         return "已删除";
     }
 
     @RequestMapping("/fileUpload")
-    public String upLoad(@RequestParam(value = "desc", required = false) String desc ,
-                         @RequestParam(value = "file", required = false) MultipartFile[] multipartFiles,
+    public String upLoad(@RequestParam(value = "desc", required = false, defaultValue = "没有描述") String desc ,
+                         @RequestParam(value = "file") MultipartFile[] multipartFiles,
                          HttpServletRequest request) throws IOException {
-        int result = 0;
         for (MultipartFile multipartFile : multipartFiles) {
             // 限定文件大小
             long size = multipartFile.getSize();
@@ -97,7 +96,7 @@ public class NetDiskController {
             // 向目标位置存储文件
             multipartFile.transferTo(new File(filePath));
 
-            result = netDiskService.uploadFile(newFileName,
+            netDiskService.uploadFile(newFileName,
                                                originalFilename,
                                                desc,
                                                multipartFile.getContentType(),
@@ -111,8 +110,7 @@ public class NetDiskController {
     @RequestMapping("/netDisk/page")
     @ResponseBody
     public PageInfo<NetDisk> getAllPath(@RequestParam(value = "pageNum", required = false, defaultValue = "1") Integer pageNum) {
-        PageInfo<NetDisk> netDiskPageInfo = netDiskService.selectAllFiles(pageNum);
-        return netDiskPageInfo;
+        return netDiskService.selectAllFiles(pageNum);
     }
 
 
