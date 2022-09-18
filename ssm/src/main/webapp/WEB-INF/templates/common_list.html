@@ -179,8 +179,8 @@
                         "dailyPageNum": this.dailyPageNum
                     }
                 }).then(response => {
-                    this.commonLists = response.data[0];
-                    this.dailyListContents = response.data[1];
+                    this.commonLists = response.data.data[0];
+                    this.dailyListContents = response.data.data[1];
                 })
             },
             finishCommonList(id) {
@@ -191,14 +191,15 @@
                         "id": id
                     }
                 }).then(response => {
-                    layer.msg(response.data)
+                    layer.msg(response.data.data)
                     this.showList();
                 })
             },
             deleteCommonList(id) {
-                if (!confirm("确定删除?")) {
-                    event.preventDefault();
-                } else {
+                layer.confirm('确定删除?', {
+                    btn: ['确定','取消'],
+                    title:'删除确认'
+                }, function (){
                     axios({
                         "url": "commonlists/delete",
                         "method": "POST",
@@ -206,10 +207,10 @@
                             "id": id
                         }
                     }).then(response => {
-                        layer.msg(response.data)
-                        this.showList();
-                    })
-                }
+                        layer.msg(response.data.data)
+                        vue.showList();
+                    });
+                });
             },
             toPage(page) {
                 axios({
@@ -221,8 +222,8 @@
                     }
                 }).then(response => {
                     this.pageNum = page;
-                    this.commonLists = response.data[0];
-                    this.dailyListContents = response.data[1];
+                    this.commonLists = response.data.data[0];
+                    this.dailyListContents = response.data.data[1];
                 })
             },
             addCommonList() {
@@ -233,7 +234,7 @@
                         "addContent": this.addContent
                     }
                 }).then(response => {
-                    layer.msg(response.data)
+                    layer.msg(response.data.data)
                     this.showList()
                 })
             },
@@ -245,14 +246,15 @@
                         "id": id
                     }
                 }).then(response => {
-                    layer.msg(response.data)
+                    layer.msg(response.data.data)
                     this.showList();
                 })
             },
             deleteDailyList(id) {
-                if (!confirm("确定删除?")) {
-                    event.preventDefault();
-                } else {
+                layer.confirm('确定删除?', {
+                    btn: ['确定','取消'],
+                    title:'删除确认'
+                }, function (){
                     axios({
                         "url": "commonlists/deleteDaily",
                         "method": "POST",
@@ -260,10 +262,10 @@
                             "id": id
                         }
                     }).then(response => {
-                        layer.msg(response.data)
-                        this.showList();
-                    })
-                }
+                        layer.msg(response.data.data)
+                        vue.showList();
+                    });
+                });
             },
             toDailyPage(page) {
                 axios({
@@ -275,8 +277,8 @@
                     }
                 }).then(response => {
                     this.dailyPageNum = page;
-                    this.commonLists = response.data[0];
-                    this.dailyListContents = response.data[1];
+                    this.commonLists = response.data.data[0];
+                    this.dailyListContents = response.data.data[1];
                 })
             },
             addDailyList() {
@@ -287,7 +289,7 @@
                         "addDailyContent": this.addDailyContent
                     }
                 }).then(response => {
-                    layer.msg(response.data)
+                    layer.msg(response.data.data)
                     this.showList()
                 })
             }

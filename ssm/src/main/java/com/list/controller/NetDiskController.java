@@ -2,7 +2,9 @@ package com.list.controller;
 
 import com.github.pagehelper.PageInfo;
 import com.list.pojo.NetDisk;
+import com.list.service.DlriService;
 import com.list.service.NetDiskService;
+import com.list.utils.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -16,7 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,17 +40,29 @@ public class NetDiskController {
     @Autowired
     private NetDiskService netDiskService;
 
+    @Autowired
+    private DlriService dlriService;
+
     @RequestMapping("/netDisk")
     public String toNetDisk() {
         return "netdisk";
     }
 
     @RequestMapping("/download")
-    public ResponseEntity<byte[]> downLoad(HttpSession httpSession, @RequestParam(value = "id", required = false, defaultValue = "1") Integer id) throws IOException {
-        ServletContext servletContext = httpSession.getServletContext();
+    public ResponseEntity<byte[]> downLoad(HttpServletRequest request, @RequestParam(value = "id", required = false, defaultValue = "1") Integer id) throws IOException {
+        String ip = request.getHeader("x-forwarded-for");
+        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("Proxy-Client-IP");
+        }
+        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("WL-Proxy-Client-IP");
+        }
+        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        dlriService.recordIp(ip, id);
         NetDisk file = netDiskService.selectOne(id);
-        String realPath = servletContext.getRealPath(File.separator + "upload" + File.separator + file.getUuid());
-        InputStream is = Files.newInputStream(Paths.get(realPath));
+        InputStream is = Files.newInputStream(Paths.get(file.getFilePath()));
         byte[] bytes = new byte[is.available()];
         is.read(bytes);
         MultiValueMap<String, String> headers = new HttpHeaders();
@@ -62,55 +75,54 @@ public class NetDiskController {
 
     @RequestMapping("/deleteFile")
     @ResponseBody
-    public String deleteFile(@RequestParam(value = "id") Integer id) {
+    public Result<String> deleteFile(@RequestParam(value = "id") Integer id) {
         netDiskService.deleteFile(id);
-        return "已删除";
+        return Result.ok("已删除");
     }
 
     @RequestMapping("/fileUpload")
-    public String upLoad(@RequestParam(value = "desc", required = false, defaultValue = "没有描述") String desc ,
+    public String upLoad(@RequestParam(value = "desc", required = false, defaultValue = "没有描述") String desc,
                          @RequestParam(value = "file") MultipartFile[] multipartFiles,
                          HttpServletRequest request) throws IOException {
         for (MultipartFile multipartFile : multipartFiles) {
             // 限定文件大小
             long size = multipartFile.getSize();
-            if (size>=1024*1024*500) {
+            if (size >= 1024 * 1024 * 500) {
                 continue;
             }
             // 编号 不重复名字 名字 描述 类型 大小 地址 上传时间 下载次数
-
             String originalFilename = multipartFile.getOriginalFilename();
             // 处理原始文件名 logo.jpg
             String suffix = originalFilename.substring(originalFilename.lastIndexOf("."));
             String uuid = UUID.randomUUID().toString();
             String newFileName = uuid.replace("-", "").concat(suffix);
             ServletContext servletContext = request.getServletContext();
-            String realPath = servletContext.getRealPath(File.separator + "upload");
-
+            String realPath = servletContext.getRealPath(File.separator);
+            File file = new File(realPath);
+            String parent = file.getParentFile().getParentFile().getParent() + File.separator + "upload";
             // 创建目标存储位置
-            File upload=new File(realPath);
-            if (!upload.exists()){
+            File upload = new File(parent);
+            if (!upload.exists()) {
                 upload.mkdirs();
             }
-            String filePath = realPath + File.separator + newFileName;
+            String filePath = parent + File.separator + newFileName;
             // 向目标位置存储文件
             multipartFile.transferTo(new File(filePath));
-
             netDiskService.uploadFile(newFileName,
-                                               originalFilename,
-                                               desc,
-                                               multipartFile.getContentType(),
-                                               (int)size,
-                                               filePath,
-                                               new SimpleDateFormat("yyyy年MM月dd日 HH:mm:ss").format(new Date()));
+                    originalFilename,
+                    desc,
+                    multipartFile.getContentType(),
+                    (int) size,
+                    filePath,
+                    new SimpleDateFormat("yyyy年MM月dd日 HH:mm:ss").format(new Date()));
         }
         return "redirect:/netDisk";
     }
 
     @RequestMapping("/netDisk/page")
     @ResponseBody
-    public PageInfo<NetDisk> getAllPath(@RequestParam(value = "pageNum", required = false, defaultValue = "1") Integer pageNum) {
-        return netDiskService.selectAllFiles(pageNum);
+    public Result<PageInfo<NetDisk>> getAllPath(@RequestParam(value = "pageNum", required = false, defaultValue = "1") Integer pageNum) {
+        return Result.ok(netDiskService.selectAllFiles(pageNum));
     }
 
 

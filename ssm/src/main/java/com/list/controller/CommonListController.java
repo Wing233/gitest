@@ -4,6 +4,7 @@ import com.github.pagehelper.PageInfo;
 import com.list.pojo.CommonList;
 import com.list.pojo.DailyListContent;
 import com.list.service.CommonListService;
+import com.list.utils.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -32,56 +33,57 @@ public class CommonListController {
 
     @RequestMapping(value = "/commonlists/page")
     @ResponseBody
-    public List<Object> getAllCommonList(@RequestParam(value = "pageNum", required = false, defaultValue = "1") Integer pageNum,
-                                @RequestParam(value = "dailyPageNum", required = false, defaultValue = "1") Integer dailyPageNum) {
+    public Result<List<Object>> getAllCommonList(@RequestParam(value = "pageNum", required = false, defaultValue = "1") Integer pageNum,
+                                                @RequestParam(value = "dailyPageNum", required = false, defaultValue = "1") Integer dailyPageNum) {
         PageInfo<CommonList> commonLists = commonListService.selectAll(pageNum);
         PageInfo<DailyListContent> dailyListContents = commonListService.selectAllDailyListContent(dailyPageNum);
         List<Object> list = new ArrayList<>();
         list.add(commonLists);
         list.add(dailyListContents);
-        return list;
+
+        return Result.ok(list);
     }
 
     @RequestMapping(value = "/commonlists/delete")
     @ResponseBody
-    public String deleteCommonList(@RequestParam(value = "id", required = false) Integer id) {
+    public Result<String> deleteCommonList(@RequestParam(value = "id", required = false) Integer id) {
         commonListService.deleteCommonListById(id);
-        return "已删除";
+        return Result.ok("已删除");
     }
 
     @RequestMapping(value = "/commonlists/update")
     @ResponseBody
-    public String updateCommonList(@RequestParam(value = "id", required = false) Integer id) {
+    public Result<String> updateCommonList(@RequestParam(value = "id", required = false) Integer id) {
         commonListService.finishCommonList(id);
-        return "已完成";
+        return Result.ok("已完成");
     }
 
     @PostMapping("/addOrUpdateList")
     @ResponseBody
-    public String addCommonList(@RequestParam(value = "addContent", required = false) String content) {
+    public Result<String> addCommonList(@RequestParam(value = "addContent", required = false) String content) {
         commonListService.addCommonListWithContent(content);
-        return "添加成功";
+        return Result.ok("添加成功");
     }
 
     @RequestMapping(value = "/commonlists/deleteDaily")
     @ResponseBody
-    public String deleteDailyListContent(@RequestParam(value = "id", required = false)Integer id) {
+    public Result<String> deleteDailyListContent(@RequestParam(value = "id", required = false)Integer id) {
         commonListService.deleteDailyListById(id);
-        return "已删除";
+        return Result.ok("已删除");
     }
 
     @RequestMapping(value = "/commonlists/updateDaily")
     @ResponseBody
-    public String updateDailyListContent(@RequestParam(value = "id", required = false)Integer id) {
+    public Result<String> updateDailyListContent(@RequestParam(value = "id", required = false)Integer id) {
         commonListService.finishDailyListContent(id);
-        return "已完成";
+        return Result.ok("已完成");
     }
 
     @PostMapping("/addOrUpdateDailyList")
     @ResponseBody
-    public String addDailyListContent(@RequestParam(value = "addDailyContent", required = false) String content) {
+    public Result<String> addDailyListContent(@RequestParam(value = "addDailyContent", required = false) String content) {
         commonListService.addDailyListContent(content);
-        return "已添加";
+        return Result.ok("已添加");
     }
 
 }
