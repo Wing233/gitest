@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <base th:href="@{/}">
+    <meta charset="UTF-8">
+    <title>播放</title>
+</head>
+<body>
+<a href="netDisk"><h2>返回</h2></a><br>
+<video controls>
+    <source th:src="${filePath}">
+</video>
+</body>
+</html>

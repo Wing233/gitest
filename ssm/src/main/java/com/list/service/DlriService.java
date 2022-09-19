@@ -10,4 +10,6 @@ package com.list.service;
 
 public interface DlriService {
     void recordIp(String ip, Integer id);
+
+    void recordIp(String ip, String fileName);
 }

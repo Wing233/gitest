@@ -25,6 +25,7 @@
 <body>
 <a href=""><h2>返回</h2></a><br>
 
+
 <div id="app">
     <h1 align="center">败毒网盘</h1>
     <table id="empTable1" cellspacing="0px" cellpadding="0px">
@@ -36,12 +37,12 @@
             <th>描述</th>
             <th>上传时间</th>
             <th>下载量</th>
-            <th colspan="2">操作</th>
+            <th colspan="3">操作</th>
         </tr>
         </thead>
         <tbody v-if="files.list.length == 0">
         <tr style="text-align: center">
-            <td colspan="8">啥也没有</td>
+            <td colspan="9">啥也没有</td>
         </tr>
         </tbody>
         <tbody v-if="files.list.length > 0">
@@ -52,14 +53,22 @@
             <td v-text="commonList.desc"></td>
             <td v-text="commonList.uploadDate"></td>
             <td v-text="commonList.downloadCount"></td>
+            <td v-if="commonList.fileName.endsWith('.mp4') || commonList.fileName.endsWith('.avi') || commonList.fileName.endsWith('.mov') || commonList.fileName.endsWith('.flv')">
+                <form th:action="@{/netDisk/play}">
+                    <input type="hidden" name="fileName" v-model="commonList.uuid">
+                    <input type="submit" value="播放">
+                </form>
+            </td>
+            <td v-if="commonList.fileName.endsWith('.bmp') || commonList.fileName.endsWith('.jpg') || commonList.fileName.endsWith('.png') || commonList.fileName.endsWith('.jpeg') || commonList.fileName.endsWith('.gif')">
+                <img :src="'upload/' + commonList.uuid" width="64" height="64"/>
+            </td>
             <td>
                 <form th:action="@{/download}">
                     <input type="hidden" name="id" v-model="commonList.id">
                     <input type="submit" value="下载">
                 </form>
-<!--                <input type="button" value="下载" @click="downloadFile(commonList.id)">-->
             </td>
-            <td>
+            <td colspan="2">
                 <input type="button" value="删除" @click="deleteFile(commonList.id)">
             </td>
         </tr>
@@ -111,9 +120,9 @@
             },
             deleteFile(id) {
                 layer.confirm('确定删除?', {
-                    btn: ['确定','取消'],
-                    title:'删除确认'
-                }, function (){
+                    btn: ['确定', '取消'],
+                    title: '删除确认'
+                }, function () {
                     axios({
                         "url": "deleteFile",
                         "method": "POST",

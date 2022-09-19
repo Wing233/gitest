@@ -102,12 +102,20 @@ public class NetDiskController {
             String parent = file.getParentFile().getParentFile().getParent() + File.separator + "upload";
             // 创建目标存储位置
             File upload = new File(parent);
+            String filePath1 = realPath + File.separator + "upload";
+            File file1 = new File(filePath1);
             if (!upload.exists()) {
                 upload.mkdirs();
             }
+            if (!file1.exists()) {
+                file1.mkdirs();
+            }
             String filePath = parent + File.separator + newFileName;
+            File file2 = new File(filePath);
+            File file3 = new File(filePath1 + File.separator + newFileName);
             // 向目标位置存储文件
-            multipartFile.transferTo(new File(filePath));
+            multipartFile.transferTo(file2);
+            Files.copy(file2.toPath(), file3.toPath());
             netDiskService.uploadFile(newFileName,
                     originalFilename,
                     desc,
@@ -123,6 +131,23 @@ public class NetDiskController {
     @ResponseBody
     public Result<PageInfo<NetDisk>> getAllPath(@RequestParam(value = "pageNum", required = false, defaultValue = "1") Integer pageNum) {
         return Result.ok(netDiskService.selectAllFiles(pageNum));
+    }
+
+    @RequestMapping("/netDisk/play")
+    public String play(@RequestParam("fileName")String fileName, HttpServletRequest request) {
+        request.setAttribute("filePath", "upload\\" + fileName);
+        String ip = request.getHeader("x-forwarded-for");
+        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("Proxy-Client-IP");
+        }
+        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("WL-Proxy-Client-IP");
+        }
+        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        dlriService.recordIp(ip, fileName);
+        return "play";
     }
 
 
